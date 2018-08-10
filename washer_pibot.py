@@ -1,18 +1,33 @@
 try:
-    # Import necessary libraries
+# Import necessary libraries
     import RPi.GPIO as GPIO
     import time
     import json, requests
     import logging             # for debugging
+    import Adafruit_CharLCD as Adafruit_CharLCD
 except RuntimeError:
     print("Error loading RPi.GPIO")
 
-DELAYINSECS = 120 # Time in seconds before declaring end of cycle
+DELAYINSECS = 10 # Time in seconds before declaring end of cycle
 
 # Define RPi input/output pins
 BUTTON = 10
-# LED = 37
 VIBRATION = 14
+
+#LCD Pin SETUP
+lcd_rs = 7
+lcd_en = 8
+lcd_d4 = 25
+lcd_d5 = 24
+lcd_d6 = 23
+lcd_d7 = 18
+lcd_backlight = 15
+# Define LCD column and row size for 16x2 LCD.
+lcd_columns = 16
+lcd_rows    = 2
+
+# Initialize the LCD using the pins above.
+lcd = LCD.Adafruit_CharLCD(lcd_rs, lcd_en, lcd_d4, lcd_d5, lcd_d6, lcd_d7, lcd_columns, lcd_rows, lcd_backlight)
 
 # Function to send push notification with pushbullet
 def pushdone():
@@ -27,12 +42,14 @@ def main():
         # Configure GPIO pins
         GPIO.setmode(GPIO.BCM)
         GPIO.setup(VIBRATION, GPIO.IN)
+        led.set_backlight(0)
         # GPIO.setup(LED, GPIO.OUT)
 
         # "Pull-down" resistor must be added to input 
         # push-button to avoid floating value at 
         # RPi input when button not in closed circuit.
         GPIO.setup(BUTTON, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        led.set_backlight(1)
 
         # Start of sensing of upwards or downwards front on
         # pin connected to vibration detector. 
@@ -53,12 +70,14 @@ def main():
         # periodically checks vibration.
         while not stop:
             logging.info("Main loop iteration")
-            print "Waiting for Press"
+            # print "Waiting for Press"
+            lcd.message("Waiting for Press")
             # GPIO.output(LED, True) # LED off
             GPIO.wait_for_edge(BUTTON, GPIO.RISING) # wait for signal 
                                                     # from push-button
             logging.info(" Started")
-            print "Started"
+            # print "Started"
+            lcd.message("Started")
             going = True
             # GPIO.output(LED, False) # LED on
 
@@ -68,8 +87,9 @@ def main():
             # minutes, cycle considered done.
             while going:
                 logging.info("  Inner loop iteration")
-                print "Inner Loop"
-                print "Maching Active"
+                # print "Inner Loop"
+                # print "Maching Active"
+                lcd.message("Machine Active")
                 time.sleep(DELAYINSECS)
                 logging.info("  Just slept %ds", DELAYINSECS)
                 
@@ -84,7 +104,8 @@ def main():
                 # End of cycle if no vibration detected.
                 if not GPIO.event_detected(VIBRATION):
                     logging.info("  Stopped vibrating")
-                    print "Machine Inactive"
+                    # print "Machine Inactive"
+                    lcd.message("Machine Inactive")
                     pushdone()
                     going = False
             logging.debug(" End of iteration")
