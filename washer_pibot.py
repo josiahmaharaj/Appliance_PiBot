@@ -4,7 +4,7 @@ try:
     import time
     import json, requests
     import logging             # for debugging
-    import Adafruit_CharLCD as Adafruit_CharLCD
+    import Adafruit_CharLCD as LCD
 except RuntimeError:
     print("Error loading RPi.GPIO")
 
